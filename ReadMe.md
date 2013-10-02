@@ -1,7 +1,8 @@
-This is a super sloppy project for playing with Cassandra Unit
+Results : 
+For 10k random q's against column familiies with 10, 100, and 1000 columns.
 
-First results are this :
-For whole row reads : 
-10 cols took : 3217 milliseconds
-1000 cols took : 17800 milliseconds
+10 cols took : 834
+100 cols took : 4065
+1000 cols took : 9544
+
 

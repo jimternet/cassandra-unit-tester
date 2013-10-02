@@ -49,8 +49,9 @@ public class Util {
 
 			// populateRows(ks,1000);
 			generateSchemaFile(ks, 10, 0);
-
+			generateSchemaFile(ks, 100, 1);
 			generateSchemaFile(ks, 1000, 1);
+			
 
 //			String outputFileName = "target/" + numberOfColumns
 //					+ "_column_schema.xml";

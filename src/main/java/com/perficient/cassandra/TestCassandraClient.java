@@ -42,6 +42,7 @@ public class TestCassandraClient {
 		
 		TestCassandraClient testClient = new TestCassandraClient();
 		loadTenColumns(testClient);
+		loadHundredColumns(testClient);
 		loadThousandColumns(testClient);
 //		testClient.allRows();
 
@@ -51,6 +52,14 @@ public class TestCassandraClient {
 
 	private static void loadTenColumns(TestCassandraClient testClient) {
 		int columnFamilySize = 10;
+
+		ColumnFamily<String, String> columnFamily = testClient.init(columnFamilySize);
+		testClient.loadData(1000, columnFamilySize, columnFamily);
+		LOG.info("DONE WITH LOAD");
+	}
+	
+	private static void loadHundredColumns(TestCassandraClient testClient) {
+		int columnFamilySize = 100;
 
 		ColumnFamily<String, String> columnFamily = testClient.init(columnFamilySize);
 		testClient.loadData(1000, columnFamilySize, columnFamily);
