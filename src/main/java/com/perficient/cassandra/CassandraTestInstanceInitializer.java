@@ -22,7 +22,6 @@ public class CassandraTestInstanceInitializer {
 	private static final String LOAD_FILE = "column_schema.xml";
 	private static final String LOAD_FILE_2 = "dataSetAllDataTypes.xml";
 	public static final String KS_NAME = "TestKeyspace";
-	public static final String CF_NAME = "10family";
 	public static final int PORT = 9171;
 	public static final String HOST = "localhost";
 	public static final String HOST_AND_PORT = HOST + ":" + PORT;
@@ -34,6 +33,7 @@ public class CassandraTestInstanceInitializer {
 	public static void main(String[] args) {
 
 		CassandraTestInstanceInitializer app = new CassandraTestInstanceInitializer();
+		app.initializeTestCassandraInstance();
 		
 		
 

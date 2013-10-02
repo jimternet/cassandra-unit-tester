@@ -30,32 +30,50 @@ import com.netflix.astyanax.util.RangeBuilder;
 
 public class TestCassandraClient {
 
+	private Keyspace keyspace;
+	private static Logger LOG = LoggerFactory.getLogger(TestCassandraClient.class);
+	
+	
+	
 	public static void main(String[] args) {
 
 		LOG.debug("main starting");
 
-		CassandraTestInstanceInitializer.initializeTestCassandraInstance();
 		
 		TestCassandraClient testClient = new TestCassandraClient();
-		testClient.init();
-		testClient.loadData(1000);
-		LOG.info("DONE WITH LOAD");
-		testClient.allRows();
-		CassandraTestInstanceInitializer.stopTestCassandraInstance();
+		loadTenColumns(testClient);
+		loadThousandColumns(testClient);
+//		testClient.allRows();
 
 		
 	}
 
-	private Keyspace keyspace;
-	private static Logger LOG = LoggerFactory.getLogger(TestCassandraClient.class);
 
-	private ColumnFamily<String, String> COLUMN_FAMILY;
+	private static void loadTenColumns(TestCassandraClient testClient) {
+		int columnFamilySize = 10;
+
+		ColumnFamily<String, String> columnFamily = testClient.init(columnFamilySize);
+		testClient.loadData(1000, columnFamilySize, columnFamily);
+		LOG.info("DONE WITH LOAD");
+	}
 	
-	private void init() {
+	private static void loadThousandColumns(TestCassandraClient testClient) {
+		int columnFamilySize = 1000;
+		ColumnFamily<String, String> columnFamily = testClient.init(columnFamilySize);
+		testClient.loadData(1000, columnFamilySize, columnFamily);
+		LOG.info("DONE WITH LOAD");
+	}
+
+
+
+
+//	private ColumnFamily<String, String> COLUMN_FAMILY;
+	
+	public ColumnFamily<String, String> init(int numberOfColumns) {
 		
 		LOG.debug("init astynax CF");
-		COLUMN_FAMILY = ColumnFamily
-	            .newColumnFamily(CassandraTestInstanceInitializer.CF_NAME, StringSerializer.get(),
+		 ColumnFamily<String, String> columnFamily = ColumnFamily
+	            .newColumnFamily(numberOfColumns+"family", StringSerializer.get(),
 	                    StringSerializer.get());
 		
 		AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
@@ -73,18 +91,47 @@ public class TestCassandraClient {
 
 		context.start();
 		keyspace = context.getClient();
-		LOG.debug("DONE init astynax CF");
+		LOG.info("DONE init astynax CF");
+		return columnFamily;
 
 	}
 	
-	private void loadData(int numberOfRows){
-		MutationBatch m = keyspace.prepareMutationBatch();
+	private void loadData(int numberOfRows, int numberOfColumns, ColumnFamily<String, String> columnFamily){
 		
-		
+	    LOG.info("preparing to load into : " + columnFamily.getName());
+
 		
 		for (int rowCounter = 0; rowCounter < numberOfRows ; rowCounter++) {
-			for (int colIterator = 1; colIterator < 11; colIterator++) {
-				m.withRow(COLUMN_FAMILY, rowCounter + "")
+			//this is one row at a time.
+			MutationBatch m = keyspace.prepareMutationBatch();
+
+			for (int colIterator = 1; colIterator < numberOfColumns +1; colIterator++) {
+				m.withRow(columnFamily, rowCounter + "")
+			    .putColumn(colIterator + "", UUID.randomUUID().toString(), null);
+
+			}
+			try {
+			    OperationResult<Void> result = m.execute();
+			} catch (ConnectionException e) {
+			    LOG.error(e.toString());
+			    e.printStackTrace();
+			}
+
+		}
+
+		
+
+	}
+	
+	private void loadDataBigBatch(int numberOfRows, int numberOfColumns, ColumnFamily<String, String> columnFamily){
+		MutationBatch m = keyspace.prepareMutationBatch();
+		
+	    LOG.info("preparing to load into : " + columnFamily.getName());
+
+		
+		for (int rowCounter = 0; rowCounter < numberOfRows ; rowCounter++) {
+			for (int colIterator = 1; colIterator < numberOfColumns +1; colIterator++) {
+				m.withRow(columnFamily, rowCounter + "")
 			    .putColumn(colIterator + "", UUID.randomUUID().toString(), null);
 
 			}
@@ -95,17 +142,16 @@ public class TestCassandraClient {
 		    OperationResult<Void> result = m.execute();
 		} catch (ConnectionException e) {
 		    LOG.error(e.toString());
+		    e.printStackTrace();
 		}
 
 	}
 	
 	
-	
-	
 	//Hack code to print the rows and columns. :p
-	private void allRows(){
+	private void allRows(ColumnFamily<String, String> columnFamily){
 		try {
-		    OperationResult<Rows<String, String>> rows = keyspace.prepareQuery(COLUMN_FAMILY)
+		    OperationResult<Rows<String, String>> rows = keyspace.prepareQuery(columnFamily)
 			.getAllRows()
 			.setRowLimit(100)  // This is the page size
 			.withColumnRange(new RangeBuilder().setMaxSize(10).build())
@@ -140,5 +186,18 @@ public class TestCassandraClient {
 		    Assert.fail();
 		}
 	}
+
+
+	public Keyspace getKeyspace() {
+		return keyspace;
+	}
+
+
+	public void setKeyspace(Keyspace keyspace) {
+		this.keyspace = keyspace;
+	}
+	
+	
+	
 
 }
